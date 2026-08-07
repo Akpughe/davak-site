@@ -1,0 +1,79 @@
+---
+export interface Props {
+  title: string;
+  description?: string;
+  type?: 'website' | 'article';
+}
+
+const {
+  title,
+  description = 'David Akpughe — AI/ML product engineer building AI systems and learning products.',
+  type = 'website',
+} = Astro.props;
+const siteUrl = Astro.site ?? new URL('https://davak-portfolio.vercel.app');
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
+const imageUrl = new URL('/images/david.jpg', siteUrl).toString();
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': `${siteUrl}#person`,
+      name: 'David Akpughe',
+      url: siteUrl.toString(),
+      jobTitle: 'AI/ML Product Engineer',
+      image: imageUrl,
+      sameAs: [
+        'https://www.linkedin.com/in/david-akpughe-392241103/',
+        'https://github.com/Akpughe',
+        'https://davak01.substack.com',
+      ],
+    },
+    {
+      '@type': type === 'article' ? 'Article' : 'WebSite',
+      '@id': `${canonicalUrl}#${type}`,
+      url: canonicalUrl,
+      name: title,
+      description,
+      ...(type === 'article' ? { author: { '@id': `${siteUrl}#person` } } : {}),
+    },
+  ],
+};
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="author" content="David Akpughe" />
+    <meta name="robots" content="index, follow" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content={type} />
+    <meta property="og:locale" content="en_NG" />
+    <meta property="og:site_name" content="David Akpughe" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:alt" content="David Akpughe" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>

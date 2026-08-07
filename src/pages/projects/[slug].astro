@@ -1,0 +1,36 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', ({ data }) => Boolean(data.page));
+
+  return projects.map((project) => ({
+    params: { slug: project.id.replace(/\.md$/, '') },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const description = project.body.trim().split('\n\n')[0].replace(/[*_`#]/g, '');
+---
+
+<Layout title={`${project.data.title} — David Akpughe`} description={description} type="article">
+  <article class="project-detail">
+    <div class="page-header">
+      <a href="/">← David Akpughe</a>
+    </div>
+
+    <h1>{project.data.title}</h1>
+    <p class="project-kicker">{project.data.date}, {project.data.category}</p>
+
+    <div class="project-content">
+      <Content />
+    </div>
+
+    <a class="project-cta" href={project.data.link} target="_blank" rel="noopener">{project.data.ctaLabel ?? `Explore ${project.data.title}`} ↗</a>
+  </article>
+
+  <footer class="footer">© {new Date().getFullYear()} David Akpughe</footer>
+</Layout>

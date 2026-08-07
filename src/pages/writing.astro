@@ -1,0 +1,75 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+
+const posts = (await getCollection('writing')).sort(
+  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+
+type SubstackPost = {
+  title: string;
+  post_date: string;
+  subtitle?: string;
+  canonical_url: string;
+};
+
+let remotePosts: SubstackPost[] = [];
+try {
+  const response = await fetch('https://davak01.substack.com/api/v1/posts?limit=20');
+  if (response.ok) {
+    const data = await response.json();
+    remotePosts = Array.isArray(data) ? data : [];
+  }
+} catch {
+  remotePosts = [];
+}
+
+const articles = remotePosts.length
+  ? remotePosts.map((post) => ({
+      title: post.title,
+      date: post.post_date,
+      description: post.subtitle ?? 'Read the full article on Substack.',
+      link: post.canonical_url,
+    }))
+  : posts.map((post) => ({
+      title: post.data.title,
+      date: post.data.date,
+      description: post.data.description,
+      link: post.data.link,
+    }));
+
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+---
+
+<Layout
+  title="Writing — David Akpughe"
+  description="Technical writing by David Akpughe on AI engineering, production RAG systems, AI teammates, and building software products."
+>
+  <div class="page-header">
+    <a href="/">← David Akpughe</a>
+  </div>
+
+  <h1 class="page-title">Writing</h1>
+  <p class="page-intro">
+    Essays on AI engineering, building products, and debugging with LLMs.
+  </p>
+
+  <div class="writing-list">
+    {articles.map((post) => (
+      <article class="writing-card">
+        <h3 class="writing-title">
+          <a href={post.link} target="_blank" rel="noopener">{post.title}</a>
+        </h3>
+        <p class="writing-meta">{formatDate(post.date)}</p>
+        <p class="writing-desc">{post.description}</p>
+      </article>
+    ))}
+  </div>
+
+  <footer class="footer">
+    © {new Date().getFullYear()} David Akpughe
+  </footer>
+</Layout>

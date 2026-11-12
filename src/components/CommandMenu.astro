@@ -1,0 +1,155 @@
+---
+import { getCollection } from 'astro:content';
+
+const projects = (await getCollection('projects', ({ data }) => Boolean(data.page))).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+type Item = { label: string; group: string; href?: string; action?: string; external?: boolean };
+
+const items: Item[] = [
+  { label: 'Home', group: 'Pages', href: '/' },
+  { label: 'Writing', group: 'Pages', href: '/writing' },
+  ...projects.map((p) => ({ label: p.data.title, group: 'Projects', href: p.data.page! })),
+  { label: 'Toggle theme', group: 'Actions', action: 'theme' },
+  { label: 'Copy email', group: 'Actions', action: 'copy-email' },
+  { label: 'Book a call', group: 'Links', href: 'https://cal.com/david-akpughe-igoy5i/15min', external: true },
+  { label: 'Resume', group: 'Links', href: '/resume.pdf', external: true },
+  { label: 'GitHub', group: 'Links', href: 'https://github.com/Akpughe', external: true },
+  { label: 'LinkedIn', group: 'Links', href: 'https://www.linkedin.com/in/david-akpughe-392241103/', external: true },
+  { label: 'Substack', group: 'Links', href: 'https://substack.com/@davak01', external: true },
+];
+---
+
+<button class="tool-button command-trigger" type="button" aria-label="Open command menu" title="Command menu">
+  <kbd>⌘K</kbd>
+</button>
+
+<dialog class="command-menu" aria-label="Command menu">
+  <input class="command-input" type="text" placeholder="Jump to…" autocomplete="off" spellcheck="false" aria-label="Search commands" />
+  <ul class="command-list" role="listbox">
+    {items.map((item) => (
+      <li
+        role="option"
+        data-label={item.label.toLowerCase()}
+        data-href={item.href}
+        data-action={item.action}
+        data-external={item.external ? '' : undefined}
+      >
+        <span>{item.label}</span>
+        <span class="command-group">{item.group}{item.external ? ' ↗' : ''}</span>
+      </li>
+    ))}
+  </ul>
+  <p class="command-footer"><kbd>↑↓</kbd> navigate <kbd>↵</kbd> open <kbd>esc</kbd> close</p>
+</dialog>
+
+<script>
+  import { navigate } from 'astro:transitions/client';
+
+  const EMAIL = 'davidakpughe2@gmail.com';
+
+  function init() {
+    const dialog = document.querySelector<HTMLDialogElement>('.command-menu');
+    const trigger = document.querySelector<HTMLButtonElement>('.command-trigger');
+    if (!dialog || !trigger) return;
+    const input = dialog.querySelector('input')!;
+    const options = [...dialog.querySelectorAll<HTMLLIElement>('li')];
+    let active = 0;
+
+    const visible = () => options.filter((o) => !o.hidden);
+    const highlight = (index: number) => {
+      const list = visible();
+      active = (index + list.length) % Math.max(list.length, 1);
+      options.forEach((o) => o.removeAttribute('aria-selected'));
+      list[active]?.setAttribute('aria-selected', 'true');
+      list[active]?.scrollIntoView({ block: 'nearest' });
+    };
+
+    const open = () => {
+      if (dialog.open) return;
+      input.value = '';
+      options.forEach((o) => (o.hidden = false));
+      dialog.showModal();
+      highlight(0);
+    };
+
+    const run = (option?: HTMLLIElement) => {
+      if (!option) return;
+      dialog.close();
+      const { href, action } = option.dataset;
+      if (action === 'theme') window.toggleTheme();
+      else if (action === 'copy-email') navigator.clipboard?.writeText(EMAIL);
+      else if (href && option.hasAttribute('data-external')) window.open(href, '_blank', 'noopener');
+      else if (href) navigate(href);
+    };
+
+    trigger.addEventListener('click', open);
+    input.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      options.forEach((o) => (o.hidden = !o.dataset.label!.includes(q)));
+      highlight(0);
+    });
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); highlight(active + 1); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); highlight(active - 1); }
+      if (e.key === 'Enter') { e.preventDefault(); run(visible()[active]); }
+    });
+    options.forEach((o) => {
+      o.addEventListener('click', () => run(o));
+      o.addEventListener('mousemove', () => highlight(visible().indexOf(o)));
+    });
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+
+    document.onkeydown = (e) => {
+      const typing = (e.target as HTMLElement).closest('input, textarea, [contenteditable]');
+      if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) {
+        e.preventDefault();
+        dialog.open ? dialog.close() : open();
+      }
+    };
+  }
+
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .command-trigger kbd { font-family: inherit; font-size: 12px; }
+
+  .command-menu {
+    width: min(520px, calc(100vw - 32px));
+    margin: 15vh auto auto;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.25);
+    overflow: hidden;
+  }
+  .command-menu[open] { animation: menu-in 160ms ease-out; }
+  .command-menu::backdrop { background: rgb(0 0 0 / 0.2); backdrop-filter: blur(2px); }
+
+  .command-input {
+    width: 100%;
+    padding: 16px 18px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 17px;
+    outline: none;
+  }
+  .command-list { max-height: 320px; overflow-y: auto; padding: 6px; list-style: none; }
+  .command-list li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-radius: 8px; font-size: 15px; cursor: pointer; }
+  .command-list li[aria-selected='true'] { background: var(--card); }
+  .command-group { color: var(--muted); font-size: 12px; }
+  .command-footer { display: flex; gap: 6px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+  .command-footer kbd { margin-left: 6px; font-family: inherit; }
+  .command-footer kbd:first-child { margin-left: 0; }
+
+  @keyframes menu-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  }
+</style>

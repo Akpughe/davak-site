@@ -1,6 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+import LocalTime from '../components/LocalTime.astro';
+import ProjectArt from '../components/ProjectArt.astro';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 
@@ -12,7 +14,7 @@ function excerpt(text: string, wordLimit = 22) {
 
 <Layout
   title="David Akpughe — AI/ML Product Engineer"
-  description="David Akpughe is an AI/ML product engineer and co-founder of Nuton, building AI systems and learning products from Abuja, Nigeria."
+  description="David Akpughe is an AI/ML product engineer and co-founder of Nuton, building AI systems and learning products from the United Kingdom."
 >
   <section class="hero">
     <div class="hero-copy">
@@ -23,7 +25,7 @@ function excerpt(text: string, wordLimit = 22) {
         <li>Previously Full-Stack Engineer at ChowCentral (YC S23) and Autochek Africa</li>
         <li>Honours BSc Computer Science, Babcock University</li>
         <li>Building AI systems that simplify complexity and create real impact</li>
-        <li>Based in Abuja, Nigeria</li>
+        <li>Based in the United Kingdom<br /><LocalTime /></li>
       </ul>
       <nav class="socials" aria-label="Social links">
       <a href="https://www.linkedin.com/in/david-akpughe-392241103/" target="_blank" rel="noopener" aria-label="LinkedIn">
@@ -63,6 +65,7 @@ function excerpt(text: string, wordLimit = 22) {
       <article class="project-card">
         <a href={project.data.page ?? project.data.link} target={project.data.page ? undefined : '_blank'} rel={project.data.page ? undefined : 'noopener'} class="project-image-wrap">
           <div class="project-image-placeholder">
+            <ProjectArt seed={project.data.title} />
             <span class="project-mark">{project.data.title.slice(0, 1)}</span>
             <span>{project.data.title}</span>
           </div>

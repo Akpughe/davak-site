@@ -9,6 +9,7 @@ type Item = { label: string; group: string; href?: string; action?: string; exte
 
 const items: Item[] = [
   { label: 'Home', group: 'Pages', href: '/' },
+  { label: 'About', group: 'Pages', href: '/about' },
   { label: 'Writing', group: 'Pages', href: '/writing' },
   ...projects.map((p) => ({ label: p.data.title, group: 'Projects', href: p.data.page! })),
   { label: 'Toggle theme', group: 'Actions', action: 'theme' },

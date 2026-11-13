@@ -14,16 +14,33 @@ export async function getStaticPaths() {
 const { project } = Astro.props;
 const { Content } = await render(project);
 const description = project.body.trim().split('\n\n')[0].replace(/[*_`#]/g, '');
+const slug = project.id.replace(/\.md$/, '');
+const { published, updated } = project.data;
+const lastDate = updated ?? published;
 ---
 
-<Layout title={`${project.data.title} — David Akpughe`} description={description} type="article">
+<Layout
+  title={`${project.data.title} — David Akpughe`}
+  description={description}
+  type="article"
+  ogImage={`/og/${slug}.png`}
+  published={published}
+  updated={updated}
+  breadcrumbs={[
+    { name: 'David Akpughe', path: '/' },
+    { name: project.data.title, path: `/projects/${slug}/` },
+  ]}
+>
   <article class="project-detail">
     <div class="page-header">
       <a href="/">← David Akpughe</a>
     </div>
 
     <h1>{project.data.title}</h1>
-    <p class="project-kicker">{project.data.date}, {project.data.category}</p>
+    <p class="project-kicker">
+      {project.data.date}, {project.data.category}
+      {lastDate && <> · Updated <time datetime={lastDate}>{new Date(lastDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</time></>}
+    </p>
 
     <div class="project-content">
       <Content />

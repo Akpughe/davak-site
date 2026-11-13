@@ -5,6 +5,7 @@ category: AI/ML
 link: https://nuton.app
 page: /projects/nuton-rag
 ctaLabel: Explore Nuton.app
+published: '2026-11-12'
 order: 2
 ---
 

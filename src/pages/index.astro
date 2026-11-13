@@ -48,11 +48,14 @@ function excerpt(text: string, wordLimit = 22) {
       </a>
       </nav>
       <p class="nav-links">
-        <a href="/writing">Writing</a>
+        <a href="/about">About</a> · <a href="/writing">Writing</a>
       </p>
     </div>
     <div class="portrait">
-      <img src="/images/david.jpg" alt="David Akpughe" />
+      <picture>
+        <source srcset="/images/david.webp" type="image/webp" />
+        <img src="/images/david-640.jpg" alt="David Akpughe" width="512" height="640" fetchpriority="high" />
+      </picture>
     </div>
   </section>
 

@@ -1,0 +1,61 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import { profile } from '../lib/site';
+
+const guides = (await getCollection('projects', ({ data }) => Boolean(data.page))).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<Layout
+  title="About David Akpughe — AI/ML Product Engineer"
+  description={profile.summary}
+  ogImage="/og/about.png"
+  breadcrumbs={[
+    { name: 'David Akpughe', path: '/' },
+    { name: 'About', path: '/about/' },
+  ]}
+>
+  <article class="project-detail">
+    <div class="page-header">
+      <a href="/">← David Akpughe</a>
+    </div>
+
+    <h1>About</h1>
+
+    <div class="project-content">
+      <p>{profile.summary}</p>
+
+      <h2>Background</h2>
+      <ul>
+        <li>{profile.current.role}, <a href={profile.current.url} target="_blank" rel="noopener">{profile.current.org}</a>: an AI-powered learning platform</li>
+        {profile.previous.map((p) => <li>Previously {p.role} at {p.org}{p.note ? ` (${p.note})` : ''}</li>)}
+        <li>{profile.education.degree}, {profile.education.school}</li>
+        <li>Based in the {profile.location}</li>
+      </ul>
+
+      <h2>What I work on</h2>
+      <p>
+        I build AI systems that hold up in production: retrieval pipelines that work on messy real-world documents,
+        generation that stays grounded in its sources, and the product around them that people actually use.
+        At Nuton that means the RAG engine behind course generation and the tools schools use to create lesson plans and notes.
+      </p>
+
+      <h2>Technical write-ups</h2>
+      <ul>
+        {guides.map((g) => <li><a href={`${g.data.page}/`}>{g.data.title}</a></li>)}
+      </ul>
+
+      <h2>Get in touch</h2>
+      <p>
+        Email <a href={`mailto:${profile.email}`}>{profile.email}</a>, <a href={profile.links.cal} target="_blank" rel="noopener">book a call</a>,
+        or find me on <a href={profile.links.github} target="_blank" rel="noopener">GitHub</a>,
+        <a href={profile.links.linkedin} target="_blank" rel="noopener">LinkedIn</a>, and
+        <a href={profile.links.substack} target="_blank" rel="noopener">Substack</a>.
+      </p>
+    </div>
+  </article>
+
+  <footer class="footer">© {new Date().getFullYear()} David Akpughe</footer>
+</Layout>

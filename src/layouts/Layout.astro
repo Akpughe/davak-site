@@ -3,44 +3,107 @@ import { ClientRouter } from 'astro:transitions';
 import CommandMenu from '../components/CommandMenu.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 
+import { SITE_URL, profile } from '../lib/site';
+
 export interface Props {
   title: string;
   description?: string;
   type?: 'website' | 'article';
+  ogImage?: string;
+  breadcrumbs?: { name: string; path: string }[];
+  published?: string;
+  updated?: string;
 }
 
 const {
   title,
   description = 'David Akpughe — AI/ML product engineer building AI systems and learning products.',
   type = 'website',
+  ogImage = '/og/index.png',
+  breadcrumbs,
+  published,
+  updated,
 } = Astro.props;
-const siteUrl = Astro.site ?? new URL('https://davak-portfolio.vercel.app');
-const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
-const imageUrl = new URL('/images/david.jpg', siteUrl).toString();
+const siteUrl = Astro.site ?? new URL(SITE_URL);
+const abs = (path: string) => new URL(path, siteUrl).toString();
+const canonicalUrl = abs(Astro.url.pathname);
+const imageUrl = abs(ogImage);
+const personId = `${abs('/')}#person`;
+const nutonId = `${abs('/')}#nuton`;
+
 const structuredData = {
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'Person',
-      '@id': `${siteUrl}#person`,
-      name: 'David Akpughe',
-      url: siteUrl.toString(),
-      jobTitle: 'AI/ML Product Engineer',
-      image: imageUrl,
-      sameAs: [
-        'https://www.linkedin.com/in/david-akpughe-392241103/',
-        'https://github.com/Akpughe',
-        'https://davak01.substack.com',
-      ],
+      '@id': personId,
+      name: profile.name,
+      url: abs('/'),
+      jobTitle: profile.jobTitle,
+      description: profile.summary,
+      image: abs(profile.image),
+      email: `mailto:${profile.email}`,
+      homeLocation: { '@type': 'Country', name: profile.location },
+      worksFor: { '@id': nutonId },
+      alumniOf: { '@type': 'CollegeOrUniversity', name: profile.education.school },
+      hasCredential: { '@type': 'EducationalOccupationalCredential', name: profile.education.degree },
+      knowsAbout: profile.knowsAbout,
+      sameAs: [profile.links.linkedin, profile.links.github, profile.links.substack, profile.links.substackBlog],
     },
     {
-      '@type': type === 'article' ? 'Article' : 'WebSite',
-      '@id': `${canonicalUrl}#${type}`,
-      url: canonicalUrl,
-      name: title,
-      description,
-      ...(type === 'article' ? { author: { '@id': `${siteUrl}#person` } } : {}),
+      '@type': 'Organization',
+      '@id': nutonId,
+      name: profile.current.org,
+      url: profile.current.url,
+      description: 'AI-powered learning platform that turns YouTube videos and documents into courses, quizzes, flashcards, and podcasts.',
+      founder: { '@id': personId },
     },
+    {
+      '@type': 'WebSite',
+      '@id': `${abs('/')}#website`,
+      url: abs('/'),
+      name: profile.name,
+      inLanguage: 'en-GB',
+      publisher: { '@id': personId },
+    },
+    type === 'article'
+      ? {
+          '@type': 'TechArticle',
+          '@id': `${canonicalUrl}#article`,
+          url: canonicalUrl,
+          headline: title,
+          description,
+          image: imageUrl,
+          inLanguage: 'en-GB',
+          author: { '@id': personId },
+          publisher: { '@id': personId },
+          isPartOf: { '@id': `${abs('/')}#website` },
+          about: { '@id': nutonId },
+          ...(published ? { datePublished: published } : {}),
+          ...(updated ?? published ? { dateModified: updated ?? published } : {}),
+        }
+      : {
+          '@type': Astro.url.pathname === '/' ? 'ProfilePage' : 'WebPage',
+          '@id': `${canonicalUrl}#webpage`,
+          url: canonicalUrl,
+          name: title,
+          description,
+          isPartOf: { '@id': `${abs('/')}#website` },
+          ...(Astro.url.pathname === '/' || Astro.url.pathname === '/about/' || Astro.url.pathname === '/about'
+            ? { mainEntity: { '@id': personId } }
+            : {}),
+        },
+    ...(breadcrumbs?.length
+      ? [{
+          '@type': 'BreadcrumbList',
+          itemListElement: breadcrumbs.map((crumb, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: crumb.name,
+            item: abs(crumb.path),
+          })),
+        }]
+      : []),
   ],
 };
 ---
@@ -62,7 +125,11 @@ const structuredData = {
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={imageUrl} />
-    <meta property="og:image:alt" content="David Akpughe" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title} />
+    {type === 'article' && published && <meta property="article:published_time" content={published} />}
+    {type === 'article' && (updated ?? published) && <meta property="article:modified_time" content={updated ?? published} />}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
@@ -70,6 +137,10 @@ const structuredData = {
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
     <title>{title}</title>
     <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="text/plain" title="LLM summary" href="/llms.txt" />
+    <link rel="me" href={profile.links.github} />
+    <link rel="me" href={profile.links.linkedin} />
     <script is:inline>
       (function () {
         function apply(doc) {

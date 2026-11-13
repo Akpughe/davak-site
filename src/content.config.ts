@@ -11,6 +11,8 @@ const projects = defineCollection({
     page: z.string().optional(),
     ctaLabel: z.string().optional(),
     order: z.number().default(0),
+    published: z.string().optional(),
+    updated: z.string().optional(),
   }),
 });
 

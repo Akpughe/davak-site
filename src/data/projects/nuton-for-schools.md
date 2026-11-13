@@ -5,6 +5,7 @@ category: Product
 link: https://nuton.app
 page: /projects/nuton-for-schools
 ctaLabel: Visit Nuton.app
+published: '2026-11-12'
 order: 4
 ---
 

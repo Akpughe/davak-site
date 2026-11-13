@@ -90,6 +90,7 @@ html.theme-switching::view-transition-new(root) { animation: none; mix-blend-mod
   border-radius: 16px;
   background: var(--card);
 }
+.portrait picture { display: contents; }
 .portrait img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 25%; }
 
 .socials { display: flex; align-items: center; gap: 14px; margin-top: 24px; color: var(--muted); }
@@ -134,6 +135,7 @@ html.theme-switching::view-transition-new(root) { animation: none; mix-blend-mod
 .project-detail .project-content p { margin-top: 16px; }
 .project-detail .project-content ul { margin: 16px 0 0 22px; }
 .project-detail .project-content li { margin-top: 6px; }
+.project-detail .project-content a { text-decoration: underline; text-underline-offset: 2px; }
 .project-detail .project-content h3 { margin: 28px 0 4px; font-size: 17px; font-weight: 600; line-height: 1.3; }
 .project-detail .project-content ol { margin: 16px 0 0 22px; }
 .project-detail .project-content strong { font-weight: 600; }

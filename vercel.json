@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "davak-portfolio.vercel.app" }],
+      "destination": "https://www.davak.site/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/projects/nutonai-pad",
+      "destination": "/projects/nuton-for-schools",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(llms|llms-full).txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+    }
+  ]
+}

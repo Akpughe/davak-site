@@ -1,16 +1,17 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
-import { getCollection } from 'astro:content';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import satori from 'satori';
 import sharp from 'sharp';
 import { dotField } from '../../lib/dot-art';
 import { profile } from '../../lib/site';
+import { articlesOf, getProjects, headlineOf, productOf } from '../../lib/projects';
 
 type Card = { title: string; subtitle: string; seed: string };
 
 export const getStaticPaths = (async () => {
-  const projects = await getCollection('projects', ({ data }) => Boolean(data.page));
+  const all = await getProjects();
+  const projects = articlesOf(all);
   const pages: { slug: string; card: Card }[] = [
     { slug: 'index', card: { title: profile.name, subtitle: `${profile.jobTitle} · Co-founder, Nuton`, seed: 'davak.site' } },
     { slug: 'writing', card: { title: 'Writing', subtitle: 'Essays on AI engineering and building products', seed: 'Writing' } },
@@ -18,8 +19,8 @@ export const getStaticPaths = (async () => {
     ...projects.map((p) => ({
       slug: p.id.replace(/\.md$/, ''),
       card: {
-        title: p.data.title,
-        subtitle: `${p.data.category} · How it's built`,
+        title: headlineOf(p),
+        subtitle: p.data.kind === 'writeup' ? `Technical write-up · ${productOf(p, all).data.title}` : `Product write-up · How it's built`,
         seed: p.data.title,
       },
     })),
@@ -64,7 +65,7 @@ export const GET: APIRoute = async ({ props }) => {
                 props: {
                   style: { display: 'flex', flexDirection: 'column' },
                   children: [
-                    { type: 'div', props: { style: { fontSize: title.length > 22 ? 64 : 80, lineHeight: 1.05, letterSpacing: '-0.03em' }, children: title } },
+                    { type: 'div', props: { style: { fontSize: title.length > 40 ? 52 : title.length > 22 ? 64 : 80, lineHeight: 1.05, letterSpacing: '-0.03em' }, children: title } },
                     { type: 'div', props: { style: { marginTop: 24, fontSize: 32, color: '#6b7280' }, children: subtitle } },
                   ],
                 },

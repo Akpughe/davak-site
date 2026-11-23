@@ -1,34 +1,69 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
 import Layout from '../../layouts/Layout.astro';
+import {
+  articlesOf,
+  descriptionOf,
+  getProjects,
+  headlineOf,
+  hostOf,
+  productOf,
+  readingMinutes,
+  slugOf,
+  wordCount,
+  type Project,
+} from '../../lib/projects';
 
 export async function getStaticPaths() {
-  const projects = await getCollection('projects', ({ data }) => Boolean(data.page));
-
-  return projects.map((project) => ({
-    params: { slug: project.id.replace(/\.md$/, '') },
-    props: { project },
+  const all = await getProjects();
+  return articlesOf(all).map((project) => ({
+    params: { slug: slugOf(project) },
+    props: { project, all },
   }));
 }
 
-const { project } = Astro.props;
-const { Content } = await render(project);
-const description = project.body.trim().split('\n\n')[0].replace(/[*_`#]/g, '');
-const slug = project.id.replace(/\.md$/, '');
+const { project, all } = Astro.props as { project: Project; all: Project[] };
+const { Content, headings } = await render(project);
+const slug = slugOf(project);
+const product = productOf(project, all);
+const isWriteup = project.data.kind === 'writeup';
+const description = descriptionOf(project);
+const minutes = readingMinutes(project.body);
 const { published, updated } = project.data;
 const lastDate = updated ?? published;
+const toc = headings.filter((h) => h.depth === 2);
+const productLinks = [
+  { label: project.data.ctaLabel ?? `Open ${hostOf(project.data.link)}`, url: project.data.link },
+  ...(project.data.links ?? []),
+];
+const panelCover = project.data.cover ?? product.data.cover;
+const related = articlesOf(all).filter((p) => p !== project).slice(0, 4);
+const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 
 <Layout
-  title={`${project.data.title} — David Akpughe`}
+  title={project.data.seoTitle ?? `${project.data.title} — David Akpughe`}
   description={description}
   type="article"
   ogImage={`/og/${slug}.png`}
   published={published}
   updated={updated}
+  keywords={project.data.keywords}
+  words={wordCount(project.body)}
+  minutes={minutes}
+  about={{
+    name: product.data.title,
+    url: product.data.link,
+    description: product.data.summary ?? descriptionOf(product),
+    isNuton: slugOf(product) === 'nuton',
+    category: product.data.category === 'Mobile' ? 'FinanceApplication' : product.data.category === 'Open Source' ? 'DeveloperApplication' : 'EducationalApplication',
+    os: product.data.category === 'Mobile' ? 'iOS, Android' : product.data.category === 'Open Source' ? 'Linux, macOS, Docker' : 'Web',
+  }}
   breadcrumbs={[
     { name: 'David Akpughe', path: '/' },
-    { name: project.data.title, path: `/projects/${slug}/` },
+    { name: 'Writing', path: '/writing/' },
+    { name: headlineOf(project), path: `/projects/${slug}/` },
   ]}
 >
   <article class="project-detail">
@@ -36,17 +71,64 @@ const lastDate = updated ?? published;
       <a href="/">← David Akpughe</a>
     </div>
 
-    <h1>{project.data.title}</h1>
+    <p class="article-label">{isWriteup ? 'Technical write-up' : 'Product write-up'}</p>
+    <h1>{headlineOf(project)}</h1>
     <p class="project-kicker">
-      {project.data.date}, {project.data.category}
-      {lastDate && <> · Updated <time datetime={lastDate}>{new Date(lastDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</time></>}
+      {project.data.date}, {project.data.category} · {minutes} min read
+      {lastDate && <> · {updated ? 'Updated' : 'Published'} <time datetime={lastDate}>{formatDate(lastDate)}</time></>}
     </p>
+
+    <aside class="product-panel" aria-label={`About ${product.data.title}`}>
+      {panelCover && (
+        <a href={project.data.link} target="_blank" rel="noopener" class="product-panel-image" tabindex="-1">
+          <Image src={panelCover} alt={(project.data.cover ? project.data.coverAlt : product.data.coverAlt) ?? product.data.title} widths={[240, 480]} sizes="160px" loading="eager" />
+        </a>
+      )}
+      <div>
+        <p class="product-panel-eyebrow">{isWriteup ? `How ${product.data.title} works under the hood` : 'Use the product'}</p>
+        <p class="product-panel-title">
+          {isWriteup ? <>This article explains the engineering. To see it in action, use <strong>{product.data.title}</strong>.</> : <>{product.data.summary}</>}
+        </p>
+        <p class="product-panel-links">
+          {productLinks.map((l) => <a href={l.url} target="_blank" rel="noopener">{l.label} ↗</a>)}
+        </p>
+      </div>
+    </aside>
+
+    {toc.length > 2 && (
+      <nav class="toc" aria-label="Contents">
+        <p>Contents</p>
+        <ol>
+          {toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
+        </ol>
+      </nav>
+    )}
 
     <div class="project-content">
       <Content />
     </div>
 
-    <a class="project-cta" href={project.data.link} target="_blank" rel="noopener">{project.data.ctaLabel ?? `Explore ${project.data.title}`} ↗</a>
+    <aside class="product-panel product-panel-end" aria-label={`Try ${product.data.title}`}>
+      <div>
+        <p class="product-panel-eyebrow">Try it</p>
+        <p class="product-panel-links">
+          {productLinks.map((l) => <a href={l.url} target="_blank" rel="noopener">{l.label} ↗</a>)}
+        </p>
+      </div>
+    </aside>
+
+    <section class="related" aria-labelledby="related-heading">
+      <h2 id="related-heading">More write-ups</h2>
+      <ul>
+        {related.map((p) => (
+          <li>
+            <a href={`${p.data.page}/`}>{headlineOf(p)}</a>
+            <span>{p.data.kind === 'writeup' ? 'Technical write-up' : 'Product write-up'} · {readingMinutes(p.body)} min</span>
+          </li>
+        ))}
+      </ul>
+      <p class="related-all"><a href="/writing/">All writing →</a></p>
+    </section>
   </article>
 
   <footer class="footer">© {new Date().getFullYear()} David Akpughe</footer>

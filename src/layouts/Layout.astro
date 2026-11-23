@@ -13,6 +13,11 @@ export interface Props {
   breadcrumbs?: { name: string; path: string }[];
   published?: string;
   updated?: string;
+  // Article extras: the product the article is about, and indexing hints.
+  about?: { name: string; url: string; description: string; category?: string; os?: string; isNuton?: boolean };
+  keywords?: string[];
+  words?: number;
+  minutes?: number;
 }
 
 const {
@@ -23,6 +28,10 @@ const {
   breadcrumbs,
   published,
   updated,
+  about,
+  keywords,
+  words,
+  minutes,
 } = Astro.props;
 const siteUrl = Astro.site ?? new URL(SITE_URL);
 const abs = (path: string) => new URL(path, siteUrl).toString();
@@ -45,8 +54,8 @@ const structuredData = {
       email: `mailto:${profile.email}`,
       homeLocation: { '@type': 'Country', name: profile.location },
       worksFor: { '@id': nutonId },
-      alumniOf: { '@type': 'CollegeOrUniversity', name: profile.education.school },
-      hasCredential: { '@type': 'EducationalOccupationalCredential', name: profile.education.degree },
+      alumniOf: profile.education.map((e) => ({ '@type': 'CollegeOrUniversity', name: e.school })),
+      hasCredential: profile.education.map((e) => ({ '@type': 'EducationalOccupationalCredential', name: e.degree })),
       knowsAbout: profile.knowsAbout,
       sameAs: [profile.links.linkedin, profile.links.github, profile.links.substack, profile.links.substackBlog],
     },
@@ -78,7 +87,23 @@ const structuredData = {
           author: { '@id': personId },
           publisher: { '@id': personId },
           isPartOf: { '@id': `${abs('/')}#website` },
-          about: { '@id': nutonId },
+          mainEntityOfPage: canonicalUrl,
+          about: about?.isNuton
+            ? { '@id': nutonId }
+            : about
+              ? {
+                  '@type': 'SoftwareApplication',
+                  name: about.name,
+                  url: about.url,
+                  description: about.description,
+                  applicationCategory: about.category ?? 'WebApplication',
+                  operatingSystem: about.os ?? 'Web',
+                  creator: { '@id': personId },
+                }
+              : { '@id': nutonId },
+          ...(keywords?.length ? { keywords: keywords.join(', ') } : {}),
+          ...(words ? { wordCount: words } : {}),
+          ...(minutes ? { timeRequired: `PT${minutes}M` } : {}),
           ...(published ? { datePublished: published } : {}),
           ...(updated ?? published ? { dateModified: updated ?? published } : {}),
         }
@@ -136,8 +161,12 @@ const structuredData = {
     <meta name="twitter:image" content={imageUrl} />
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
     <title>{title}</title>
-    <link rel="icon" href="/favicon.ico" />
+    {keywords?.length && <meta name="keywords" content={keywords.join(', ')} />}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#fafaf8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)" />
     <link rel="alternate" type="text/plain" title="LLM summary" href="/llms.txt" />
     <link rel="me" href={profile.links.github} />
     <link rel="me" href={profile.links.linkedin} />

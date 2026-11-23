@@ -1,9 +1,9 @@
 ---
-import { getCollection } from 'astro:content';
+import { articlesOf, getProjects, headlineOf } from '../lib/projects';
 
-const projects = (await getCollection('projects', ({ data }) => Boolean(data.page))).sort(
-  (a, b) => a.data.order - b.data.order,
-);
+const all = await getProjects();
+const articles = articlesOf(all);
+const products = all.filter((p) => p.data.kind === 'product');
 
 type Item = { label: string; group: string; href?: string; action?: string; external?: boolean };
 
@@ -11,7 +11,8 @@ const items: Item[] = [
   { label: 'Home', group: 'Pages', href: '/' },
   { label: 'About', group: 'Pages', href: '/about' },
   { label: 'Writing', group: 'Pages', href: '/writing' },
-  ...projects.map((p) => ({ label: p.data.title, group: 'Projects', href: p.data.page! })),
+  ...articles.map((p) => ({ label: headlineOf(p), group: 'Write-ups', href: p.data.page! })),
+  ...products.map((p) => ({ label: `Open ${p.data.title}`, group: 'Products', href: p.data.link, external: true })),
   { label: 'Toggle theme', group: 'Actions', action: 'theme' },
   { label: 'Copy email', group: 'Actions', action: 'copy-email' },
   { label: 'Book a call', group: 'Links', href: 'https://cal.com/david-akpughe-igoy5i/15min', external: true },

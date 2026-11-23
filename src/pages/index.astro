@@ -1,20 +1,48 @@
 ---
-import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import LocalTime from '../components/LocalTime.astro';
 import ProjectArt from '../components/ProjectArt.astro';
+import LinkIcon from '../components/LinkIcon.astro';
+import { profile } from '../lib/site';
+import { articlesFor, articlesOf, getProjects, headlineOf, hostOf, readingMinutes } from '../lib/projects';
 
-const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const all = await getProjects();
+const products = all.filter((p) => p.data.kind === 'product');
+const articles = articlesOf(all);
+const clients = all.filter((p) => p.data.kind === 'client');
 
-function excerpt(text: string, wordLimit = 22) {
+function excerpt(text: string, wordLimit = 26) {
   const words = text.trim().split(/\s+/);
   return words.length > wordLimit ? `${words.slice(0, wordLimit).join(' ')}…` : text.trim();
 }
+const summaryOf = (p: (typeof all)[number]) => p.data.summary ?? excerpt(p.body ?? '');
+const productFor = (p: (typeof all)[number]) => all.find((x) => x.id.replace(/\.md$/, '') === p.data.product);
+
+const keyOf = (label: string) => label.toLowerCase().replace(/\s+/g, '-');
+// Filter keys for a product card: its status, plus Web or Mobile from where it runs.
+const filtersOf = (p: (typeof all)[number]) => {
+  const platforms = p.data.platforms ?? [];
+  return [
+    p.data.status && keyOf(p.data.status),
+    platforms.some((x) => x === 'Web' || x === 'Chrome extension') && 'web',
+    platforms.some((x) => x === 'iOS' || x === 'Android') && 'mobile',
+  ].filter((k): k is string => Boolean(k));
+};
+const filters = [
+  { key: 'all', label: 'All', count: products.length },
+  ...['Live', 'Web', 'Mobile', 'Open source', 'In development'].map((label) => ({
+    key: keyOf(label),
+    label,
+    count: products.filter((p) => filtersOf(p).includes(keyOf(label))).length,
+  })),
+].filter((f) => f.count > 0);
 ---
+
 
 <Layout
   title="David Akpughe — AI/ML Product Engineer"
-  description="David Akpughe is an AI/ML product engineer and co-founder of Nuton, building AI systems and learning products from the United Kingdom."
+  description="David Akpughe is an AI/ML product engineer and co-founder of Nuton. Products, experience, and technical write-ups on RAG, agent memory, and AI tutoring."
 >
   <section class="hero">
     <div class="hero-copy">
@@ -23,7 +51,7 @@ function excerpt(text: string, wordLimit = 22) {
         <li>AI/ML Product Engineer</li>
         <li>Co-founder, Nuton — AI-powered learning platform</li>
         <li>Previously Full-Stack Engineer at ChowCentral (YC S23) and Autochek Africa</li>
-        <li>Honours BSc Computer Science, Babcock University</li>
+        <li>MSc Artificial Intelligence, Wrexham University (in progress); Honours BSc Computer Science, Babcock University</li>
         <li>Building AI systems that simplify complexity and create real impact</li>
         <li>Based in the United Kingdom<br /><LocalTime /></li>
       </ul>
@@ -48,7 +76,7 @@ function excerpt(text: string, wordLimit = 22) {
       </a>
       </nav>
       <p class="nav-links">
-        <a href="/about">About</a> · <a href="/writing">Writing</a>
+        <a href="/about">About</a> · <a href="#experience-heading">Experience</a> · <a href="#products-heading">Products</a> · <a href="/writing">Writing</a>
       </p>
     </div>
     <div class="portrait">
@@ -59,33 +87,144 @@ function excerpt(text: string, wordLimit = 22) {
     </div>
   </section>
 
-  <section class="work-section">
-    <h2 class="section-heading">Work</h2>
-    <p class="section-links"><a href="/writing">Writing</a> and experiments in AI, product, and software.</p>
-  </section>
-  <div class="project-grid">
-    {projects.map((project) => (
-      <article class="project-card">
-        <a href={project.data.page ?? project.data.link} target={project.data.page ? undefined : '_blank'} rel={project.data.page ? undefined : 'noopener'} class="project-image-wrap">
-          <div class="project-image-placeholder">
-            <ProjectArt seed={project.data.title} />
-            <span class="project-mark">{project.data.title.slice(0, 1)}</span>
-            <span>{project.data.title}</span>
+  <section class="work-section" aria-labelledby="experience-heading">
+    <h2 class="section-heading" id="experience-heading">Experience</h2>
+    <ol class="experience-list">
+      {profile.experience.map((job) => (
+        <li class="experience-item">
+          <p class="experience-period">{job.period}</p>
+          <div>
+            <h3 class="experience-role">
+              {job.role},{' '}
+              {job.url ? <a href={job.url} target="_blank" rel="noopener">{job.org}</a> : job.org}
+              {job.note && <span class="experience-note"> ({job.note})</span>}
+              {job.location && <span class="experience-note"> · {job.location}</span>}
+            </h3>
+            <p class="experience-summary">{job.summary}</p>
           </div>
-        </a>
-        <h3 class="project-title">
-          <a href={project.data.page ?? project.data.link} target={project.data.page ? undefined : '_blank'} rel={project.data.page ? undefined : 'noopener'}>{project.data.title}</a>
-        </h3>
-        <p class="project-meta">{project.data.date}, {project.data.category}</p>
-        <p class="project-desc">{excerpt(project.body)}</p>
-        <a class="project-more" href={project.data.page ?? project.data.link} target={project.data.page ? undefined : '_blank'} rel={project.data.page ? undefined : 'noopener'}>
-          {project.data.page ? 'Read more' : 'View project'} <span aria-hidden="true">{project.data.page ? '→' : '↗'}</span>
-        </a>
-      </article>
-    ))}
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="work-section" aria-labelledby="products-heading">
+    <h2 class="section-heading" id="products-heading">Products</h2>
+    <p class="section-links">Things I have built that you can use today. Each links to the live product, and to a write-up where there is one.</p>
+    <div class="product-filter" role="group" aria-label="Filter products">
+      {filters.map((f) => (
+        <button type="button" class={`chip chip-${f.key}`} data-filter={f.key} aria-pressed={f.key === 'all' ? 'true' : 'false'}>
+          {f.label} <span class="chip-count">{f.count}</span>
+        </button>
+      ))}
+    </div>
+  </section>
+  <div class="project-grid" aria-live="polite">
+    {products.map((project) => {
+      const writeups = articlesFor(project, all);
+      return (
+        <article class="project-card" data-filters={filtersOf(project).join(' ')}>
+          <a href={project.data.link} target="_blank" rel="noopener" class="project-image-wrap" tabindex="-1" aria-hidden="true">
+            {project.data.cover ? (
+              <Image class="project-cover" src={project.data.cover} alt="" widths={[360, 720]} sizes="(min-width: 1024px) 230px, (min-width: 640px) 45vw, 90vw" />
+            ) : (
+              <div class="project-image-placeholder">
+                <ProjectArt seed={project.data.title} />
+                <span class="project-mark">{project.data.title.slice(0, 1)}</span>
+                <span>{project.data.title}</span>
+              </div>
+            )}
+          </a>
+          <div class="product-head">
+            <h3 class="project-title">
+              <a href={project.data.link} target="_blank" rel="noopener">{project.data.title}</a>
+            </h3>
+            {project.data.status && <span class={`status chip-${keyOf(project.data.status)}`}>{project.data.status}</span>}
+          </div>
+          <p class="product-meta">
+            {(project.data.platforms ?? []).map((p) => <span class={`chip chip-${keyOf(p)}`}>{p}</span>)}
+            <span class="product-year">{project.data.date}</span>
+          </p>
+          <p class="project-desc">{summaryOf(project)}</p>
+          <div class="product-footer">
+            <p class="product-links">
+              <a class="product-open" href={project.data.link} target="_blank" rel="noopener">
+                {project.data.status === 'Open source' ? (
+                  <><LinkIcon name="github" /><span>View on GitHub</span></>
+                ) : (
+                  <>{project.data.status === 'Live' && <LinkIcon name="live" />}<span>Open {hostOf(project.data.link)}</span></>
+                )}
+                <LinkIcon name="arrow" />
+              </a>
+              {project.data.links?.filter((l) => l.card).map((l) => (
+                <a href={l.url} target="_blank" rel="noopener">
+                  {hostOf(l.url) === 'github.com' && <LinkIcon name="github" />}
+                  <span>{l.label}</span>
+                  <LinkIcon name="arrow" />
+                </a>
+              ))}
+            </p>
+            {writeups.length > 0 && (
+              <p class="product-read">
+                <span>Read</span>
+                {writeups.map((w) => (
+                  <a href={`${w.data.page}/`}>{w.data.label ?? (w === project ? 'How it’s built' : w.data.title)}</a>
+                ))}
+              </p>
+            )}
+          </div>
+        </article>
+      );
+    })}
   </div>
+
+  <section class="work-section" aria-labelledby="writeups-heading">
+    <h2 class="section-heading" id="writeups-heading">Technical write-ups</h2>
+    <p class="section-links">Long-form articles on how these products are built. Essays live on <a href="/writing">Writing</a>.</p>
+    <ul class="writeup-list">
+      {articles.map((a) => {
+        const product = a.data.kind === 'writeup' ? productFor(a) : a;
+        return (
+          <li class="writeup-item">
+            <a class="writeup-title" href={`${a.data.page}/`}>{headlineOf(a)}</a>
+            <p class="writeup-desc">{a.data.description}</p>
+            <p class="writeup-meta">
+              <span class="tag">Write-up</span> {readingMinutes(a.body)} min read
+              {product && <> · About <a href={product.data.link} target="_blank" rel="noopener">{product.data.title} ↗</a></>}
+            </p>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+
+  <section class="work-section" aria-labelledby="clients-heading">
+    <h2 class="section-heading" id="clients-heading">Client work</h2>
+    <ul class="client-list">
+      {clients.map((c) => (
+        <li>
+          <a href={c.data.link} target="_blank" rel="noopener">{c.data.title} ↗</a>
+          <span>{c.data.date} · {summaryOf(c)}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
 
   <footer class="footer">
     © {new Date().getFullYear()} David Akpughe
   </footer>
 </Layout>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.product-filter [data-filter]');
+  const cards = document.querySelectorAll<HTMLElement>('.project-card[data-filters]');
+
+  buttons.forEach((button) =>
+    button.addEventListener('click', () => {
+      const filter = button.dataset.filter!;
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+      cards.forEach((card) => {
+        card.hidden = filter !== 'all' && !card.dataset.filters!.split(' ').includes(filter);
+      });
+    }),
+  );
+</script>

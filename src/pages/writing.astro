@@ -1,6 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+import { articlesOf, getProjects, headlineOf, productOf, readingMinutes } from '../lib/projects';
+
+const all = await getProjects();
+const writeups = articlesOf(all);
 
 const posts = (await getCollection('writing')).sort(
   (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
@@ -45,8 +49,8 @@ function formatDate(dateStr: string) {
 ---
 
 <Layout
-  title="Writing — David Akpughe"
-  description="Technical writing by David Akpughe on AI engineering, production RAG systems, AI teammates, and building software products."
+  title="Writing — Technical Write-ups and Essays by David Akpughe"
+  description="Technical write-ups on production RAG, agent memory, AI voice tutoring, and mobile fintech, plus essays on AI engineering by David Akpughe."
   ogImage="/og/writing.png"
   breadcrumbs={[
     { name: 'David Akpughe', path: '/' },
@@ -59,16 +63,33 @@ function formatDate(dateStr: string) {
 
   <h1 class="page-title">Writing</h1>
   <p class="page-intro">
-    Essays on AI engineering, building products, and debugging with LLMs.
+    Technical write-ups on how my products are built, and essays on AI engineering, building products, and debugging with LLMs.
   </p>
 
+  <h2 class="section-heading writing-section">Technical write-ups</h2>
+  <p class="section-links">In-depth articles on this site. Each one links to the product it describes.</p>
+  <div class="writing-list">
+    {writeups.map((w) => {
+      const product = productOf(w, all);
+      return (
+        <article class="writing-card">
+          <h3 class="writing-title"><a href={`${w.data.page}/`}>{headlineOf(w)}</a></h3>
+          <p class="writing-meta"><span class="tag">Write-up</span> {readingMinutes(w.body)} min read · About <a class="inline-link" href={product.data.link} target="_blank" rel="noopener">{product.data.title} ↗</a></p>
+          <p class="writing-desc">{w.data.description}</p>
+        </article>
+      );
+    })}
+  </div>
+
+  <h2 class="section-heading writing-section">Essays</h2>
+  <p class="section-links">Published on <a href="https://davak01.substack.com" target="_blank" rel="noopener">Substack</a>.</p>
   <div class="writing-list">
     {articles.map((post) => (
       <article class="writing-card">
         <h3 class="writing-title">
           <a href={post.link} target="_blank" rel="noopener">{post.title}</a>
         </h3>
-        <p class="writing-meta">{formatDate(post.date)}</p>
+        <p class="writing-meta"><span class="tag">Essay</span> {formatDate(post.date)} · Substack ↗</p>
         <p class="writing-desc">{post.description}</p>
       </article>
     ))}

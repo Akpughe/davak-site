@@ -1,11 +1,12 @@
-import { getCollection } from 'astro:content';
 import { SITE_URL, profile } from './site';
+import { articlesOf, getProjects, headlineOf, plainFirstParagraph, slugOf } from './projects';
 
 const url = (path: string) => new URL(path, SITE_URL).toString();
 
 export async function llmsText(full: boolean) {
-  const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
-  const firstParagraph = (body: string) => body.trim().split('\n\n')[0].replace(/\s+/g, ' ');
+  const projects = await getProjects();
+  const articles = articlesOf(projects);
+  const titleOf = (id?: string) => projects.find((p) => slugOf(p) === id)?.data.title;
 
   const lines = [
     `# ${profile.name}`,
@@ -16,8 +17,7 @@ export async function llmsText(full: boolean) {
     '',
     `- Role: ${profile.jobTitle}`,
     `- Current: ${profile.current.role}, ${profile.current.org} (${profile.current.url})`,
-    ...profile.previous.map((p) => `- Previously: ${p.role} at ${p.org}${p.note ? ` (${p.note})` : ''}`),
-    `- Education: ${profile.education.degree}, ${profile.education.school}`,
+    ...profile.education.map((e) => `- Education: ${e.degree}, ${e.school} (${e.period})`),
     `- Based in: ${profile.location}`,
     `- Focus areas: ${profile.knowsAbout.join(', ')}`,
     `- Contact: ${profile.email} · Book a call: ${profile.links.cal}`,
@@ -28,11 +28,30 @@ export async function llmsText(full: boolean) {
     `- [About](${url('/about/')}): short biography and background`,
     `- [Writing](${url('/writing/')}): essays on AI engineering and building products`,
     '',
-    '## Projects',
+    '## Experience',
     '',
-    ...projects.map(
-      (p) => `- [${p.data.title}](${p.data.page ? url(`${p.data.page}/`) : p.data.link}): ${firstParagraph(p.body ?? '')}`,
+    ...profile.experience.map(
+      (j) => `- ${j.role}, ${j.org}${j.note ? ` (${j.note})` : ''}${j.location ? `, ${j.location}` : ''}, ${j.period}: ${j.summary}`,
     ),
+    '',
+    '## Products (live, usable)',
+    '',
+    ...projects
+      .filter((p) => p.data.kind === 'product')
+      .map((p) => `- [${p.data.title}](${p.data.link})${p.data.platforms ? ` (${p.data.platforms.join(', ')})` : ''}: ${p.data.summary ?? plainFirstParagraph(p.body)}`),
+    '',
+    '## Technical write-ups (on this site)',
+    '',
+    ...articles.map(
+      (p) =>
+        `- [${headlineOf(p)}](${url(`${p.data.page}/`)})${p.data.kind === 'writeup' ? ` (about ${titleOf(p.data.product)})` : ''}: ${p.data.description ?? plainFirstParagraph(p.body)}`,
+    ),
+    '',
+    '## Client work',
+    '',
+    ...projects
+      .filter((p) => p.data.kind === 'client')
+      .map((p) => `- [${p.data.title}](${p.data.link})${p.data.platforms ? ` (${p.data.platforms.join(', ')})` : ''}: ${p.data.summary ?? plainFirstParagraph(p.body)}`),
     '',
     '## Profiles',
     '',
@@ -42,8 +61,8 @@ export async function llmsText(full: boolean) {
   ];
 
   if (full) {
-    for (const p of projects.filter((p) => p.data.page)) {
-      lines.push('', '---', '', `# ${p.data.title}`, '', `Source: ${url(`${p.data.page}/`)}`, '', (p.body ?? '').trim());
+    for (const p of articles) {
+      lines.push('', '---', '', `# ${headlineOf(p)}`, '', `Source: ${url(`${p.data.page}/`)}`, '', (p.body ?? '').replace(/!\[[^\]]*\]\([^)]*\)\n?/g, '').trim());
     }
   } else {
     lines.push('', '## Optional', '', `- [Full text of technical write-ups](${url('/llms-full.txt')})`);

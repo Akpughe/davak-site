@@ -1,11 +1,11 @@
 ---
-import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import { profile } from '../lib/site';
+import { articlesOf, getProjects } from '../lib/projects';
 
-const guides = (await getCollection('projects', ({ data }) => Boolean(data.page))).sort(
-  (a, b) => a.data.order - b.data.order,
-);
+const all = await getProjects();
+const guides = articlesOf(all);
+const products = all.filter((p) => p.data.kind === 'product');
 ---
 
 <Layout
@@ -27,24 +27,40 @@ const guides = (await getCollection('projects', ({ data }) => Boolean(data.page)
     <div class="project-content">
       <p>{profile.summary}</p>
 
-      <h2>Background</h2>
+      <h2>Experience</h2>
       <ul>
-        <li>{profile.current.role}, <a href={profile.current.url} target="_blank" rel="noopener">{profile.current.org}</a>: an AI-powered learning platform</li>
-        {profile.previous.map((p) => <li>Previously {p.role} at {p.org}{p.note ? ` (${p.note})` : ''}</li>)}
-        <li>{profile.education.degree}, {profile.education.school}</li>
-        <li>Based in the {profile.location}</li>
+        {profile.experience.map((job) => (
+          <li>
+            <strong>{job.role}</strong>,{' '}
+            {job.url ? <a href={job.url} target="_blank" rel="noopener">{job.org}</a> : job.org}
+            {job.note ? ` (${job.note})` : ''}{job.location ? `, ${job.location}` : ''} · {job.period}. {job.summary}
+          </li>
+        ))}
+      </ul>
+
+      <h2>Education</h2>
+      <ul>
+        {profile.education.map((e) => <li>{e.degree}, {e.school} ({e.period})</li>)}
+      </ul>
+      <p>Based in the {profile.location}.</p>
+
+      <h2>Products</h2>
+      <ul>
+        {products.map((p) => <li><a href={p.data.link} target="_blank" rel="noopener">{p.data.title}</a>: {p.data.summary}</li>)}
       </ul>
 
       <h2>What I work on</h2>
       <p>
         I build AI systems that hold up in production: retrieval pipelines that work on messy real-world documents,
         generation that stays grounded in its sources, and the product around them that people actually use.
-        At Nuton that means the RAG engine behind course generation and the tools schools use to create lesson plans and notes.
+        At Nuton that means the RAG engine behind course generation, AI Blackboard (a live voice tutor that draws as it teaches),
+        and the tools schools use to create lesson plans and notes. Outside Nuton I build open-source agent memory (UltraMem),
+        mobile fintech (Kova), and side projects like Cooglr.
       </p>
 
       <h2>Technical write-ups</h2>
       <ul>
-        {guides.map((g) => <li><a href={`${g.data.page}/`}>{g.data.title}</a></li>)}
+        {guides.map((g) => <li><a href={`${g.data.page}/`}>{g.data.title}</a>: {g.data.description}</li>)}
       </ul>
 
       <h2>Get in touch</h2>

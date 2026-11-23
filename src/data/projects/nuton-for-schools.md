@@ -1,15 +1,36 @@
 ---
 title: Nuton for Schools
+headline: 'Nuton for Schools: AI lesson plans that teachers approve'
 date: '2025'
 category: Product
-link: https://nuton.app
+kind: product
+platforms: [Web]
+status: Live
+link: https://teachers.nuton.app
+links:
+  - label: Nuton.app
+    url: https://nuton.app
 page: /projects/nuton-for-schools
-ctaLabel: Visit Nuton.app
+ctaLabel: Open Nuton Teachers
+order: 3
+cover: ../../assets/projects/nuton/teachers.webp
+coverAlt: The Nuton Teachers sign-in page, reading Continue where your class left off
+summary: Lesson plans, lesson notes, assessments, and print-ready exports for teachers, in each school's own format, with teacher approval enforced in the database.
+description: How we built Nuton for Schools, a multi-tenant AI workspace where teachers create, approve, and export curriculum-aligned lesson plans and notes.
+seoTitle: Nuton for Schools — Building an AI Lesson Planner Teachers Approve
+keywords: [Nuton for Schools, AI lesson planner, lesson notes generator, NERDC curriculum, WAEC, multi-tenant SaaS, Postgres row-level security, Next.js, Turborepo, EdTech]
 published: '2026-11-12'
-order: 4
+updated: '2026-11-22'
 ---
 
 Nuton's platform for schools. It includes Nuton Teachers, a workspace where teachers create, review, approve, and print or share lesson plans, lesson notes, assignments, classwork, and quizzes, plus a school portal and an admin app. This is how we built it and the problems it solves.
+
+## At a glance
+
+- **For:** secondary-school teachers and school administrators, starting with Nigerian schools on the NERDC curriculum.
+- **Promise:** pick a class, subject, and topic; get a lesson plan or note in your school's own format; review, approve, and print.
+- **Stack:** a Turborepo monorepo with three Next.js apps, Postgres, and [Nuton RAG](/projects/nuton-rag) for generation.
+- **Safety rules live in the database:** AI output is always a draft, sharing requires approval, and seat limits are enforced with row locks.
 
 ## The problem
 

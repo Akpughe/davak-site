@@ -1,15 +1,32 @@
 ---
 title: Nuton RAG
+headline: 'Nuton RAG: turning messy documents into grounded courses'
 date: '2024'
 category: AI/ML
+kind: writeup
+label: RAG pipeline
+product: nuton
 link: https://nuton.app
 page: /projects/nuton-rag
-ctaLabel: Explore Nuton.app
-published: '2026-11-12'
+ctaLabel: Try it on Nuton.app
 order: 2
+summary: The AI engine behind Nuton. Extraction, hybrid retrieval, and grounded generation for courses, quizzes, and podcasts.
+description: How Nuton's production RAG pipeline extracts scanned PDFs and slides, runs hybrid search with RRF and reranking, and keeps AI-generated courses grounded.
+seoTitle: Nuton RAG — A Production RAG Pipeline for Grounded AI Courses
+keywords: [production RAG, retrieval-augmented generation, hybrid search, reciprocal rank fusion, reranking, Qdrant, OCR pipeline, FastAPI, grounding, hallucination checks]
+published: '2026-11-12'
+updated: '2026-11-22'
 ---
 
-The AI engine behind Nuton.app. Nuton RAG turns messy learning material (scanned PDFs, slide decks, Word documents, YouTube videos) into grounded courses, quizzes, flashcards, study guides, and podcasts. This is a technical walkthrough of how it is built and the problems we had to solve along the way.
+Nuton RAG is the AI engine behind [Nuton](/projects/nuton). It turns messy learning material (scanned PDFs, slide decks, Word documents, YouTube videos) into grounded courses, quizzes, flashcards, study guides, and podcasts. This is a technical walkthrough of how it is built and the problems we had to solve along the way.
+
+## At a glance
+
+- **Stack:** Python 3.11 and FastAPI, Postgres as the source of truth and job queue, Qdrant for dense and full-text search, Redis for rate limits, S3 for files and audio.
+- **Extraction:** pages are classified first, so only scanned pages go to OCR. Slide decks are parsed natively with speaker notes.
+- **Retrieval:** dense and BM25 keyword search in parallel, merged with Reciprocal Rank Fusion, then reranked by a cross-encoder.
+- **Grounding:** plain-code checks for unsupported numbers and invalid citations, then an independent review by a model from a different family.
+- **Result:** a two-file course group went from 10m 53s to 3m 04s end to end (−71.8%).
 
 ## The problem
 
@@ -149,6 +166,9 @@ A latency audit of group generation (several files turned into linked courses) f
 | --- | --- | --- |
 | Two-file group, end to end | 10m 53s | 3m 04s (−71.8%) |
 | Time to first course shell | baseline | 97.7% sooner |
+
+![Nuton's upload screen with three study files ready to become a course](../../assets/projects/nuton/upload.webp)
+*Where it starts for the learner: a few uploads, one button. Everything above happens after that click.*
 
 ## What I'd tell someone building this
 

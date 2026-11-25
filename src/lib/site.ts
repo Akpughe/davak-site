@@ -52,8 +52,8 @@ export const profile = {
     },
   ] as { role: string; org: string; url?: string; note?: string; location?: string; period: string; summary: string }[],
   education: [
-    { degree: 'MSc Artificial Intelligence', school: 'Wrexham University', period: 'In progress' },
-    { degree: 'Honours BSc Computer Science', school: 'Babcock University', period: '2017 – 2021' },
+    { degree: 'MSc Artificial Intelligence', school: 'Wrexham University', period: 'In progress', completed: false },
+    { degree: 'Honours BSc Computer Science', school: 'Babcock University', period: '2017 – 2021', completed: true },
   ],
   knowsAbout: [
     'Retrieval-augmented generation (RAG)',

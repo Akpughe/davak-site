@@ -7,8 +7,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 // Write-ups take theirs from frontmatter (`updated`, else `published`).
 /** @type {Record<string, string>} */
 const lastmod = {
-  '/': '2026-11-22',
-  '/about/': '2026-11-22',
+  '/': '2026-11-25',
+  '/about/': '2026-11-25',
   '/writing/': '2026-11-22',
 };
 const projectsDir = new URL('./src/data/projects/', import.meta.url);

@@ -22,10 +22,11 @@ const products = all.filter((p) => p.data.kind === 'product');
       <a href="/">← David Akpughe</a>
     </div>
 
-    <h1>About</h1>
+    <h1>About {profile.name}</h1>
 
     <div class="project-content">
       <p>{profile.summary}</p>
+      <img src={profile.image} alt={profile.name} width="256" height="320" />
 
       <h2>Experience</h2>
       <ul>
@@ -66,9 +67,9 @@ const products = all.filter((p) => p.data.kind === 'product');
       <h2>Get in touch</h2>
       <p>
         Email <a href={`mailto:${profile.email}`}>{profile.email}</a>, <a href={profile.links.cal} target="_blank" rel="noopener">book a call</a>,
-        or find me on <a href={profile.links.github} target="_blank" rel="noopener">GitHub</a>,
-        <a href={profile.links.linkedin} target="_blank" rel="noopener">LinkedIn</a>, and
-        <a href={profile.links.substack} target="_blank" rel="noopener">Substack</a>.
+        or find me on <a href={profile.links.github} target="_blank" rel="me noopener">GitHub</a>,
+        <a href={profile.links.linkedin} target="_blank" rel="me noopener">LinkedIn</a>, and
+        <a href={profile.links.substack} target="_blank" rel="me noopener">Substack</a>.
       </p>
     </div>
   </article>

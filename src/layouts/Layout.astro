@@ -35,10 +35,15 @@ const {
 } = Astro.props;
 const siteUrl = Astro.site ?? new URL(SITE_URL);
 const abs = (path: string) => new URL(path, siteUrl).toString();
-const canonicalUrl = abs(Astro.url.pathname);
+// Match the sitemap's directory URLs, including visits without a trailing slash.
+const pagePath = `${Astro.url.pathname.replace(/\/+$/, '')}/`;
+const canonicalUrl = abs(pagePath);
+const isProfilePage = pagePath === '/' || pagePath === '/about/';
 const imageUrl = abs(ogImage);
 const personId = `${abs('/')}#person`;
 const nutonId = `${abs('/')}#nuton`;
+const portraitId = `${abs('/')}#portrait`;
+const completedEducation = profile.education.filter((education) => education.completed);
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -50,14 +55,23 @@ const structuredData = {
       url: abs('/'),
       jobTitle: profile.jobTitle,
       description: profile.summary,
-      image: abs(profile.image),
+      image: { '@id': portraitId },
+      mainEntityOfPage: { '@id': `${abs('/about/')}#webpage` },
       email: `mailto:${profile.email}`,
       homeLocation: { '@type': 'Country', name: profile.location },
       worksFor: { '@id': nutonId },
-      alumniOf: profile.education.map((e) => ({ '@type': 'CollegeOrUniversity', name: e.school })),
-      hasCredential: profile.education.map((e) => ({ '@type': 'EducationalOccupationalCredential', name: e.degree })),
+      alumniOf: completedEducation.map((e) => ({ '@type': 'CollegeOrUniversity', name: e.school })),
+      hasCredential: completedEducation.map((e) => ({ '@type': 'EducationalOccupationalCredential', name: e.degree })),
       knowsAbout: profile.knowsAbout,
       sameAs: [profile.links.linkedin, profile.links.github, profile.links.substack, profile.links.substackBlog],
+    },
+    {
+      '@type': 'ImageObject',
+      '@id': portraitId,
+      url: abs(profile.image),
+      contentUrl: abs(profile.image),
+      caption: profile.name,
+      about: { '@id': personId },
     },
     {
       '@type': 'Organization',
@@ -109,14 +123,15 @@ const structuredData = {
           ...(updated ?? published ? { dateModified: updated ?? published } : {}),
         }
       : {
-          '@type': Astro.url.pathname === '/' ? 'ProfilePage' : 'WebPage',
+          '@type': isProfilePage ? 'ProfilePage' : 'WebPage',
           '@id': `${canonicalUrl}#webpage`,
           url: canonicalUrl,
           name: title,
           description,
+          inLanguage: 'en-GB',
           isPartOf: { '@id': `${abs('/')}#website` },
-          ...(Astro.url.pathname === '/' || Astro.url.pathname === '/about/' || Astro.url.pathname === '/about'
-            ? { mainEntity: { '@id': personId } }
+          ...(isProfilePage
+            ? { mainEntity: { '@id': personId }, primaryImageOfPage: { '@id': portraitId } }
             : {}),
         },
     ...(breadcrumbs?.length
@@ -140,8 +155,8 @@ const structuredData = {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="author" content="David Akpughe" />
-    <meta name="robots" content="index, follow" />
+    <meta name="author" content={profile.name} />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:type" content={type} />
@@ -162,7 +177,7 @@ const structuredData = {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={imageUrl} />
-    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')} />
     <title>{title}</title>
     {keywords?.length && <meta name="keywords" content={keywords.join(', ')} />}
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
@@ -173,6 +188,8 @@ const structuredData = {
     <link rel="alternate" type="text/plain" title="LLM summary" href="/llms.txt" />
     <link rel="me" href={profile.links.github} />
     <link rel="me" href={profile.links.linkedin} />
+    <link rel="me" href={profile.links.substack} />
+    <link rel="me" href={profile.links.substackBlog} />
     <script is:inline>
       (function () {
         function apply(doc) {

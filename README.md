@@ -1,45 +1,34 @@
-# davak-site
+# David Akpughe's portfolio
 
-Personal portfolio site for David Akpughe, built with Astro.
+Astro portfolio at https://www.davak.site.
+
+## Development
 
 ```sh
-npm create astro@latest -- --template minimal
+npm install
+npm run dev -- --background
+npm run astro -- dev status
+npm run astro -- dev logs
+npm run astro -- dev stop
+npm run build
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Identity and search metadata
 
-## 🚀 Project Structure
+- `src/lib/site.ts` contains the biography, portrait, education, and official profile URLs. Set `completed` only for awarded qualifications.
+- `src/layouts/Layout.astro` generates canonical URLs, social previews, and a linked JSON-LD graph for the person, portrait, website, organization, and page. The home and About pages use `ProfilePage`; write-ups use `TechArticle`.
+- `astro.config.mjs` sets the production domain and generates the sitemap. Update the relevant `lastmod` date after meaningful page changes.
+- `public/robots.txt` allows crawling and points to the sitemap.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Google setup after deployment
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+These account steps remain manual; repository changes do not verify ownership or submit pages to Google.
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+1. Open [Google Search Console](https://search.google.com/search-console), add the Domain property `davak.site`, and verify ownership with the DNS TXT record Google provides at the domain's DNS provider.
+2. Submit `https://www.davak.site/sitemap-index.xml` in the property's Sitemaps section.
+3. Use URL Inspection on `https://www.davak.site/` and `https://www.davak.site/about/`. Run the live test and request indexing.
+4. Check both URLs with [Google's Rich Results Test](https://search.google.com/test/rich-results) to validate the deployed profile markup.
+5. Add `https://www.davak.site/` to your LinkedIn, GitHub, and Substack profiles, and keep their name and biography consistent with the site.
+6. Monitor indexing in Search Console. If Google creates a Knowledge Panel for David Akpughe, use its “Claim this knowledge panel” option and follow [Google's verification process](https://support.google.com/knowledgepanel/answer/7534902?hl=en).
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Structured data helps describe identity; it does not guarantee indexing, rankings, or a Knowledge Panel. See [Google's profile-page guidance](https://developers.google.com/search/docs/appearance/structured-data/profile-page) and [Knowledge Panel explanation](https://support.google.com/knowledgepanel/answer/9163198?hl=en).

@@ -71,7 +71,8 @@ const structuredData = {
       '@type': 'WebSite',
       '@id': `${abs('/')}#website`,
       url: abs('/'),
-      name: profile.name,
+      name: 'davak.site',
+      alternateName: ['Davak', profile.name],
       inLanguage: 'en-GB',
       publisher: { '@id': personId },
     },
@@ -145,7 +146,9 @@ const structuredData = {
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:type" content={type} />
     <meta property="og:locale" content="en_GB" />
-    <meta property="og:site_name" content="David Akpughe" />
+    <meta property="og:site_name" content="davak.site" />
+    <meta name="application-name" content="davak.site" />
+    <meta name="apple-mobile-web-app-title" content="davak.site" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
